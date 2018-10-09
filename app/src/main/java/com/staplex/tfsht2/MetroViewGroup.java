@@ -4,7 +4,6 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 
 class MetroViewGroup extends ViewGroup {
 
@@ -26,33 +25,30 @@ class MetroViewGroup extends ViewGroup {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int parentWidth = MeasureSpec.getSize(widthMeasureSpec);
-        int parentHeight = MeasureSpec.getSize(heightMeasureSpec);
-        int childWidth = parentWidth - getPaddingLeft() - getPaddingRight();
-        int childHeight = MeasureSpec.getSize(heightMeasureSpec) - getPaddingTop() - getPaddingBottom();
+        final int parentWidth = MeasureSpec.getSize(widthMeasureSpec);
+        final int parentHeight = MeasureSpec.getSize(heightMeasureSpec);
+        final int lineWidth = parentWidth - getPaddingLeft() - getPaddingRight();
+        final int childHeight = MeasureSpec.getSize(heightMeasureSpec) - getPaddingTop() - getPaddingBottom();
 
         // Measure children
-        measureChildren(MeasureSpec.makeMeasureSpec(childWidth, MeasureSpec.AT_MOST),
+        measureChildren(MeasureSpec.makeMeasureSpec(lineWidth, MeasureSpec.AT_MOST),
                 MeasureSpec.makeMeasureSpec(childHeight, MeasureSpec.AT_MOST));
 
         // Measure result
         int measuredHeight = getPaddingTop() + getPaddingBottom();
-        // Current line width
-        int lineWidth = 0;
-        // Max width of each line
-        int maxLineWidth = parentWidth - getPaddingLeft() - getPaddingBottom();
+        int currentLineWidth = 0;
         // Max child height in current line
         int maxLineHeight = 0;
         for (int i = 0; i < getChildCount(); i++) {
             View child = getChildAt(i);
             MarginLayoutParams layoutParams = (MarginLayoutParams) child.getLayoutParams();
             int deltaWidth = child.getMeasuredWidth() + layoutParams.leftMargin + layoutParams.rightMargin;
-            if (deltaWidth + lineWidth > maxLineWidth) {
-                lineWidth = 0;
+            if (deltaWidth + currentLineWidth > currentLineWidth) {
+                currentLineWidth = 0;
                 measuredHeight += maxLineHeight;
                 maxLineHeight = 0;
             }
-            lineWidth += deltaWidth;
+            currentLineWidth += deltaWidth;
             maxLineHeight = Math.max(maxLineHeight, child.getMeasuredHeight() + layoutParams.topMargin + layoutParams.bottomMargin);
         }
 
@@ -62,6 +58,25 @@ class MetroViewGroup extends ViewGroup {
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        final int lineWidth = right - left - getPaddingLeft() - getPaddingRight();
+        int currentHeight = getPaddingTop() + getPaddingBottom();
 
+        int currentLineWidth = 0;
+        int maxLineHeight = 0;
+        for (int i = 0; i < getChildCount(); i++) {
+            View child = getChildAt(i);
+            MarginLayoutParams layoutParams = (MarginLayoutParams) child.getLayoutParams();
+            int deltaWidth = child.getMeasuredWidth() + layoutParams.leftMargin + layoutParams.rightMargin;
+            if (deltaWidth + currentLineWidth > currentLineWidth) {
+                currentLineWidth = 0;
+                currentHeight += maxLineHeight;
+                maxLineHeight = 0;
+            }
+            currentLineWidth += deltaWidth;
+            int x = left + lineWidth - deltaWidth + layoutParams.leftMargin;
+            int y = top + currentHeight + layoutParams.topMargin;
+            child.layout(x, y, x + child.getMeasuredWidth(), y + getMeasuredHeight());
+            maxLineHeight = Math.max(maxLineHeight, child.getMeasuredHeight() + layoutParams.topMargin + layoutParams.bottomMargin);
+        }
     }
 }
