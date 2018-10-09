@@ -6,6 +6,7 @@
     android:background="@drawable/metro_station_shape"
     android:backgroundTint="#e2dfdf"
     android:orientation="horizontal"
+    android:layout_margin="5dp"
     android:paddingLeft="5dp"
     android:paddingTop="3dp"
     android:paddingRight="5dp"
@@ -14,7 +15,7 @@
     <ImageView
         android:id="@+id/location_icon"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:src="@drawable/ic_location_on_white_18dp"
         tools:tint="#f00" />
 
