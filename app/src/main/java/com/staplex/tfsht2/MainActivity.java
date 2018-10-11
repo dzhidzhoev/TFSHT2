@@ -1,10 +1,17 @@
 package com.staplex.tfsht2;
 
+import android.animation.Animator;
+import android.animation.ObjectAnimator;
+import android.graphics.Path;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.ColorInt;
 import android.support.v7.app.AppCompatActivity;
+import android.transition.ChangeBounds;
+import android.transition.TransitionManager;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -20,16 +27,57 @@ public class MainActivity extends AppCompatActivity {
         View v = getLayoutInflater().inflate(R.layout.metro_station_layout, root, false);
         ((TextView) v.findViewById(R.id.metro_station_name)).setText(name);
         ((ImageView) v.findViewById(R.id.location_icon)).setColorFilter(color);
+        v.setTransitionName(name);
         v.setOnClickListener((View view) -> {
+            MetroViewGroup oldParent, newParent;
             if (view.getParent() == mvgTop) {
-                mvgTop.removeView(view);
-                mvgBottom.addView(view);
-                mvgBottom.requestLayout();
+                oldParent = mvgTop;
+                newParent = mvgBottom;
             } else {
-                mvgBottom.removeView(view);
-                mvgTop.addView(view);
-                mvgTop.requestLayout();
+                oldParent = mvgBottom;
+                newParent = mvgTop;
             }
+
+            View newView = inflateMetroStationView(newParent, name, color);
+            newView.setVisibility(View.INVISIBLE);
+            newView.addOnLayoutChangeListener((nView, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                if (newView.getParent() != null) {
+                    Rect to = new Rect(left, top, right, bottom);
+                    to.offset(newParent.getLeft(), newParent.getTop());
+                    to.offset(-oldParent.getLeft(), -oldParent.getTop());
+                    Path path = new Path();
+                    path.setLastPoint(view.getX(), view.getY());
+                    path.lineTo(to.left, to.top);
+                    ObjectAnimator animator = ObjectAnimator.ofFloat(view, "x", "y", path)
+                            .setDuration(500);
+                    animator.setInterpolator(new AccelerateDecelerateInterpolator());
+                    animator.addListener(new Animator.AnimatorListener() {
+                        @Override
+                        public void onAnimationStart(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            TransitionManager.beginDelayedTransition(root, new ChangeBounds());
+                            oldParent.removeView(view);
+                            newView.setVisibility(View.VISIBLE);
+                        }
+
+                        @Override
+                        public void onAnimationCancel(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animator animation) {
+
+                        }
+                    });
+                    animator.start();
+                }
+            });
+            newParent.addView(newView);
         });
         return v;
     }

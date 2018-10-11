@@ -100,4 +100,5 @@ class MetroViewGroup extends ViewGroup {
     protected boolean checkLayoutParams(LayoutParams p) {
         return p instanceof MarginLayoutParams;
     }
+
 }
